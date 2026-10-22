@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>인턴 연습 체크</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 레이아웃: 상단 바 + 인턴 카드 그리드(넓은 화면 2~3열, 좁으면 1열) */
+:root{
+  --bg:#f1f1f4; --surface:#fff; --surface-2:#f7f7f9; --surface-3:#ededf1;
+  --fg:#17171a; --fg-2:#6a6a74; --fg-3:#a2a2ac;
+  --line:#e4e4ea; --line-2:#f0f0f3;
+  --ok:#2e9e7e; --warn:#cf7b26;
+  --font-ui:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-num:"IBM Plex Mono","IBM Plex Sans KR",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#131316; --surface:#1c1c21; --surface-2:#232329; --surface-3:#2b2b33;
+  --fg:#f1f1f5; --fg-2:#a4a4b0; --fg-3:#6d6d79;
+  --line:#2d2d35; --line-2:#26262d;
+  --ok:#49c6a0; --warn:#e2a05c;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#131316; --surface:#1c1c21; --surface-2:#232329; --surface-3:#2b2b33;
+  --fg:#f1f1f5; --fg-2:#a4a4b0; --fg-3:#6d6d79;
+  --line:#2d2d35; --line-2:#26262d;
+  --ok:#49c6a0; --warn:#e2a05c;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:22px 56px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+.narrow{max-width:640px}
+button{font-family:inherit}
+input{font-family:inherit;outline:none}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+:focus-visible{outline:2px solid var(--fg-2);outline-offset:2px}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+
+/* 상단 바 */
+.bar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-3);margin-bottom:5px}
+h1{font-size:26px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sub{font-size:13px;color:var(--fg-2);margin-top:5px}
+.clock{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 18px;text-align:right}
+.clock b{display:block;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:30px;font-weight:600;line-height:1.1;letter-spacing:.02em}
+.clock span{font-size:11px;color:var(--fg-3)}
+
+/* 탭 */
+.tabs{display:flex;gap:4px;background:var(--surface-3);border-radius:12px;padding:4px;margin-bottom:20px;max-width:420px}
+.tab{flex:1;border:0;border-radius:9px;padding:9px 0;font-size:13.5px;font-weight:500;cursor:pointer;background:transparent;color:var(--fg-2);transition:all .15s}
+.tab.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.13);font-weight:600}
+
+/* 카드 */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.stripe{height:3px;background:var(--c)}
+.body{padding:16px 18px 18px}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.who-l{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:var(--c-soft);border:1.5px solid var(--c-line);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--c)}
+.avatar.sm{width:24px;height:24px;font-size:11px;border-width:1px}
+.name{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ghost{border:1px solid var(--line);background:transparent;color:var(--fg-3);border-radius:8px;padding:4px 10px;font-size:11.5px;cursor:pointer}
+.ghost:hover{color:var(--fg-2)}
+
+/* 진행 바 */
+.meter{margin-bottom:14px}
+.meter+.meter{padding-top:12px;border-top:1px solid var(--line-2)}
+.meter-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--fg-2);margin-bottom:6px}
+.meter-row b{font-weight:600;color:var(--fg)}
+.track{height:6px;background:var(--surface-3);border-radius:99px;overflow:hidden}
+.track.thin{height:4px}
+.fill{height:100%;border-radius:99px;background:var(--c);transition:width .4s ease}
+.fill.done{background:var(--ok)}
+.fill.soft{opacity:.55}
+.good{color:var(--ok)}
+.miss{color:var(--warn)}
+
+/* 연습 기록 줄 */
+.sessions{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.sess{display:flex;align-items:center;gap:8px;font-size:12.5px;background:var(--surface-2);border-left:2px solid var(--c-line);border-radius:9px;padding:8px 11px;min-width:0}
+.sess .ord{color:var(--fg-3);font-size:10.5px;min-width:20px}
+.sess .it{font-weight:600;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess .tm{color:var(--fg-3)}
+.sess .dur{margin-left:auto;font-weight:600;white-space:nowrap}
+
+/* 항목 칩 */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg-2);border-radius:99px;padding:7px 14px;font-size:12.5px;cursor:pointer;transition:all .15s}
+.chip.on{border-color:var(--c-line);background:var(--c-soft);color:var(--c);font-weight:600}
+.tag{font-size:10.5px;background:var(--surface-2);color:var(--fg-2);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+
+/* 메인 버튼 */
+.go{width:100%;border:1.5px solid var(--c-line);border-radius:12px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;background:var(--c-soft);color:var(--c);transition:transform .12s,background .15s}
+.go:hover{filter:brightness(1.04)}
+.go:active{transform:scale(.985)}
+.go.stop{border-color:var(--ok);background:transparent;color:var(--ok)}
+
+/* 기록 */
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+.sum-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.sum-title{font-size:15px;font-weight:600}
+.seg{display:flex;gap:3px;background:var(--surface-3);border-radius:10px;padding:3px}
+.seg button{border:0;border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;background:transparent;color:var(--fg-2);font-weight:500}
+.seg button.on{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.nav{display:flex;align-items:center;gap:8px;margin:10px 0 4px}
+.nav span{flex:1;text-align:center;font-size:12px;color:var(--fg-3)}
+.nav button{width:30px;height:26px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:14px;line-height:1;padding:0;color:var(--fg-2);cursor:pointer}
+.nav button:disabled{color:var(--line);cursor:default}
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:0 28px}
+.sum-row{padding:11px 0;border-top:1px solid var(--line-2)}
+.sum-row .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sum-row .tot{font-size:15px;font-weight:600}
+.sum-row .meta{font-size:11.5px;color:var(--fg-3);margin:4px 0 0 32px}
+.sum-row .tags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0 32px}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 18px}
+.day-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.day-head b{font-size:13.5px;font-weight:600}
+.pill{font-size:10.5px;font-weight:600;background:var(--surface-3);color:var(--fg-2);padding:2px 9px;border-radius:99px}
+.empty{text-align:center;padding:48px 0;color:var(--fg-3);font-size:14px}
+
+/* 설정 */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.panel+.panel{margin-top:16px}
+.lab{font-size:13px;color:var(--fg-2);font-weight:500;margin-bottom:10px}
+.hint{font-size:11.5px;color:var(--fg-3);margin-top:8px;line-height:1.55}
+.in{width:100%;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.in.n{width:84px;text-align:center;font-weight:600;font-family:var(--font-num)}
+.row{display:flex;gap:8px;align-items:center}
+.mcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.mrow{display:flex;gap:8px;align-items:center;margin-top:9px;padding-left:46px}
+.mrow span.k{flex:1;font-size:12.5px;color:var(--fg-3)}
+.mrow span.u{font-size:12.5px;color:var(--fg-2);width:26px}
+.x{border:1px solid var(--line);background:transparent;color:var(--fg-3);border-radius:8px;padding:9px 11px;font-size:12px;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg-2);border-radius:10px;padding:11px 16px;font-size:13px;cursor:pointer}
+.btn:hover{color:var(--fg)}
+.btn.primary{flex:1;border:0;background:var(--fg);color:var(--bg);font-weight:600}
+.ta{width:100%;min-height:110px;font-family:var(--font-num);font-size:11.5px;line-height:1.5;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--fg-2);resize:vertical}
+.msg{font-size:12.5px;color:var(--ok);margin-top:10px}
+.msg.bad{color:var(--warn)}
+.confirm{border:1px solid var(--warn);background:var(--surface-2);border-radius:12px;padding:13px;margin-top:10px;font-size:13px}
+@media (max-width:620px){
+  h1{font-size:22px}
+  .clock b{font-size:24px}
+  .tabs{max-width:none}
+}
+</style>
+
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const STORAGE_KEY="practice_records_v1";
+const SETTINGS_KEY="practice_settings_v1";
+const COLORS=["#6B5CF6","#E8614D","#2E9E7E","#D9822B","#3A86D6","#C2559B"];
+const DEFAULTS={members:["인턴 A","인턴 B"],goal:60,totalGoal:6000,items:["와인딩","커트","드라이","염색"]};
+
+// 이름 목록을 {name, daily(하루 분), goal(총 누적 분)} 형태로 맞춘다 — 예전 설정도 그대로 읽힌다
+function normMembers(saved){
+  const list=(saved&&saved.members)||DEFAULTS.members;
+  const fbTotal=(saved&&saved.totalGoal)??DEFAULTS.totalGoal;
+  const fbDay=(saved&&saved.goal)??DEFAULTS.goal;
+  return list.map(m=>typeof m==="string"
+    ?{name:m,daily:fbDay,goal:fbTotal}
+    :{name:m.name||"",daily:m.daily??fbDay,goal:m.goal??fbTotal});
+}
+function getTodayKey(){
+  return new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\. /g,"-").replace(".","");
+}
+function getNow(){
+  return new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",hour12:false});
+}
+function toMin(t){const[h,m]=t.split(":").map(Number);return h*60+m;}
+function minLabel(m){if(m<=0)return"0분";const h=Math.floor(m/60),r=m%60;return h?(r?`${h}시간 ${r}분`:`${h}시간`):`${r}분`;}
+function sessionMin(s,now,live=true){if(!s.end&&!live)return 0;const d=toMin(s.end||now)-toMin(s.start);return d>0?d:0;}
+function totalMin(ss,now,live=true){return ss.reduce((a,s)=>a+sessionMin(s,now,live),0);}
+function byItem(ss,now,live=true){
+  const map={};
+  ss.forEach(s=>{const k=s.item||"기타";map[k]=(map[k]||0)+sessionMin(s,now,live);});
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+function parseKey(k){const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d);}
+function weekStart(dt){const d=new Date(dt);d.setDate(d.getDate()-((d.getDay()+6)%7));d.setHours(0,0,0,0);return d;} // 월요일 시작
+function md(dt){return `${dt.getMonth()+1}.${dt.getDate()}`;}
+function load(key,def){try{return JSON.parse(localStorage.getItem(key)||"null")??def;}catch(e){return def;}}
+function save(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
+function vars(c){return {"--c":c,"--c-soft":c+"1f","--c-line":c+"66"};}
+
+function App(){
+  const saved=load(SETTINGS_KEY,DEFAULTS);
+  const [members,setMembers]=useState(()=>normMembers(saved));
+  const [items,setItems]=useState(()=>saved.items??DEFAULTS.items);
+  const [records,setRecords]=useState(()=>load(STORAGE_KEY,{}));
+  const [now,setNow]=useState(getNow());
+  const [picked,setPicked]=useState({});
+  const [tab,setTab]=useState("today");
+  const [range,setRange]=useState("week");
+  const [offset,setOffset]=useState(0); // 0=이번, -1=지난, …
+  const [editMembers,setEditMembers]=useState(()=>normMembers(saved).map(m=>({name:m.name,daily:m.daily,hours:Math.round((m.goal/60)*10)/10})));
+  const [editItems,setEditItems]=useState(()=>saved.items??DEFAULTS.items);
+  const [backupText,setBackupText]=useState("");
+  const [pending,setPending]=useState(null);
+  const [msg,setMsg]=useState(null);
+  const fileRef=useRef(null);
+  const taRef=useRef(null);
+  const today=getTodayKey();
+
+  useEffect(()=>{const t=setInterval(()=>setNow(getNow()),1000);return()=>clearInterval(t);},[]);
+
+  const todayRec=records[today]||{};
+  function getSessions(name){return (todayRec[name]&&todayRec[name].sessions)||[];}
+  function pickOf(name){return picked[name]||items[0]||"연습";}
+  function lifetimeMin(name){
+    return Object.keys(records).reduce((acc,date)=>{
+      const ss=(records[date]&&records[date][name]&&records[date][name].sessions)||[];
+      return acc+totalMin(ss,now,date===today);
+    },0);
+  }
+  function flash(text,bad){setMsg({text,bad});setTimeout(()=>setMsg(null),4000);}
+
+  function doToggle(name){
+    const ss=getSessions(name);
+    const last=ss[ss.length-1];
+    const next=(last&&!last.end)
+      ?ss.map((s,i)=>i===ss.length-1?{...s,end:getNow()}:s)
+      :[...ss,{item:pickOf(name),start:getNow(),end:null}];
+    const updated={...records,[today]:{...todayRec,[name]:{sessions:next}}};
+    setRecords(updated);save(STORAGE_KEY,updated);
+  }
+  function clearPerson(name){
+    const next={...records,[today]:{...todayRec}};
+    delete next[today][name];
+    setRecords(next);save(STORAGE_KEY,next);
+  }
+  function applySettings(){
+    const list=editMembers
+      .map(m=>({name:m.name.trim(),daily:Math.max(Math.round(Number(m.daily)||0),1),goal:Math.max(Math.round((Number(m.hours)||0)*60),1)}))
+      .filter(m=>m.name);
+    const its=editItems.map(n=>n.trim()).filter(Boolean);
+    if(!list.length||!its.length){flash("이름과 연습 항목은 최소 하나씩 필요합니다",true);return;}
+    setMembers(list);setItems(its);
+    save(SETTINGS_KEY,{members:list,items:its});
+    flash("저장했습니다");
+    setTab("today");
+  }
+
+  // 백업 / 복원
+  function backupJSON(){
+    return JSON.stringify({app:"practice-check",version:1,exportedAt:new Date().toISOString(),settings:{members,items},records},null,2);
+  }
+  function makeBackup(){
+    const txt=backupJSON();
+    setBackupText(txt);
+    setTimeout(()=>{if(taRef.current){taRef.current.focus();taRef.current.select();}},0);
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt)
+        .then(()=>flash("복사했습니다. 메모장에 붙여넣고 파일로 저장하세요"))
+        .catch(()=>flash("아래 칸이 선택돼 있습니다. Ctrl+C 로 복사하세요"));
+    }else{
+      flash("아래 칸이 선택돼 있습니다. Ctrl+C 로 복사하세요");
+    }
+  }
+  function stage(raw,from){
+    let d;
+    try{d=JSON.parse(raw);}catch(e){flash("백업 내용을 읽을 수 없습니다",true);return;}
+    if(!d||typeof d!=="object"||!d.records||typeof d.records!=="object"){flash("이 파일에는 연습 기록이 없습니다",true);return;}
+    const ms=normMembers({members:d.settings&&d.settings.members,goal:d.settings&&d.settings.goal,totalGoal:d.settings&&d.settings.totalGoal});
+    setPending({records:d.records,members:ms,items:(d.settings&&d.settings.items)||items,days:Object.keys(d.records).length,from});
+  }
+  function applyPending(){
+    const p=pending;
+    setRecords(p.records);save(STORAGE_KEY,p.records);
+    setMembers(p.members);setItems(p.items);
+    save(SETTINGS_KEY,{members:p.members,items:p.items});
+    setEditMembers(p.members.map(m=>({name:m.name,daily:m.daily,hours:Math.round((m.goal/60)*10)/10})));
+    setEditItems(p.items);
+    setPending(null);setBackupText("");
+    flash("복원했습니다");
+  }
+  function onFile(e){
+    const f=e.target.files&&e.target.files[0];
+    if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>stage(String(rd.result),f.name);
+    rd.onerror=()=>flash("파일을 읽지 못했습니다",true);
+    rd.readAsText(f);
+    e.target.value="";
+  }
+
+  const allDates=Object.keys(records).sort().reverse();
+  const todayTotal=members.reduce((a,m)=>a+totalMin(getSessions(m.name),now),0);
+
+  // 주간(월~일) / 월간 합계 — offset 만큼 과거로
+  const base=parseKey(today);
+  const wStart=weekStart(base);wStart.setDate(wStart.getDate()+offset*7);
+  const wEnd=new Date(wStart);wEnd.setDate(wStart.getDate()+6);
+  const mAnchor=new Date(base.getFullYear(),base.getMonth()+offset,1);
+  const mKey=`${mAnchor.getFullYear()}-${String(mAnchor.getMonth()+1).padStart(2,"0")}`;
+  const periodName=range==="week"
+    ?(offset===0?"이번 주":offset===-1?"지난 주":`${-offset}주 전`)
+    :(offset===0?"이번 달":offset===-1?"지난 달":`${-offset}달 전`);
+  const rangeLabel=range==="week"?`${md(wStart)} ~ ${md(wEnd)}`:`${mAnchor.getFullYear()}년 ${mAnchor.getMonth()+1}월`;
+  function inRange(dk){
+    if(range==="month")return dk.slice(0,7)===mKey;
+    const d=parseKey(dk);
+    return d>=wStart&&d<=wEnd;
+  }
+  function rangeStats(name,dayGoal){
+    let total=0,days=0,met=0;const its={};
+    allDates.forEach(dk=>{
+      if(!inRange(dk))return;
+      const ss=(records[dk]&&records[dk][name]&&records[dk][name].sessions)||[];
+      const t=totalMin(ss,now,dk===today);
+      if(t<=0)return;
+      total+=t;days+=1;
+      if(t>=dayGoal)met+=1;
+      byItem(ss,now,dk===today).forEach(([it,v])=>{its[it]=(its[it]||0)+v;});
+    });
+    return {total,days,met,items:Object.entries(its).sort((a,b)=>b[1]-a[1])};
+  }
+
+  return (
+    <div className="wrap">
+      <div className="bar">
+        <div>
+          <div className="eyebrow">Practice Log</div>
+          <h1>연습 체크</h1>
+          <div className="sub">오늘 다 합쳐 {minLabel(todayTotal)}</div>
+        </div>
+        <div className="clock">
+          <b>{now}</b>
+          <span className="num">{today}</span>
+        </div>
+      </div>
+
+      <div className="tabs">
+        {[["today","오늘"],["history","기록"],["settings","설정"]].map(([v,l])=>(
+          <button key={v} className={"tab"+(tab===v?" on":"")} onClick={()=>setTab(v)}>{l}</button>
+        ))}
+      </div>
+
+      {tab==="today"&&(
+        <div className="grid">
+          {members.map((m,idx)=>{
+            const name=m.name, goal=m.daily, totalGoal=m.goal;
+            const ss=getSessions(name);
+            const last=ss[ss.length-1];
+            const on=!!(last&&!last.end);
+            const total=totalMin(ss,now);
+            const left=goal-total, done=left<=0;
+            const pct=Math.min((total/goal)*100,100);
+            const life=lifetimeMin(name);
+            const lifeDone=life>=totalGoal;
+            const lifePct=Math.round((life/totalGoal)*100);
+            const sel=pickOf(name);
+            return (
+              <div className="card" key={name} style={vars(COLORS[idx%COLORS.length])}>
+                <div className="stripe"/>
+                <div className="body">
+                  <div className="who">
+                    <div className="who-l">
+                      <div className="avatar">{name[0]}</div>
+                      <div className="name">{name}</div>
+                    </div>
+                    {ss.length>0&&<button className="ghost" onClick={()=>clearPerson(name)}>초기화</button>}
+                  </div>
+
+                  <div className="meter">
+                    <div className="meter-row">
+                      <span>오늘 <b className="num">{minLabel(total)}</b></span>
+                      <span className={done?"good":""}>{done?`✓ 목표 달성${left<0?` +${minLabel(-left)}`:""}`:`${minLabel(left)} 더`}</span>
+                    </div>
+                    <div className="track"><div className={"fill"+(done?" done":"")} style={{width:pct+"%"}}/></div>
+                  </div>
+
+                  <div className="meter">
+                    <div className="meter-row">
+                      <span>누적 <b className="num">{minLabel(life)}</b> <span style={{color:"var(--fg-3)"}}>/ {minLabel(totalGoal)}</span></span>
+                      <span className={lifeDone?"good":""}>{lifeDone?`✓ 최종 목표 달성${life>totalGoal?` +${minLabel(life-totalGoal)}`:""}`:`${lifePct}% · ${minLabel(totalGoal-life)} 남음`}</span>
+                    </div>
+                    <div className="track thin"><div className={"fill soft"+(lifeDone?" done":"")} style={{width:Math.min(lifePct,100)+"%"}}/></div>
+                  </div>
+
+                  {ss.length>0&&(
+                    <div className="sessions">
+                      {ss.map((s,i)=>(
+                        <div className="sess" key={i}>
+                          <span className="ord num">{i+1}차</span>
+                          <span className="it">{s.item||"기타"}</span>
+                          <span className="tm num">{s.start}{s.end?` → ${s.end}`:""}</span>
+                          {s.end
+                            ?<span className="dur num">{minLabel(sessionMin(s,now))}</span>
+                            :<span className="dur good">연습 중… {minLabel(sessionMin(s,now))}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!on&&(
+                    <div className="chips">
+                      {items.map(it=>(
+                        <button key={it} className={"chip"+(it===sel?" on":"")} onClick={()=>setPicked(p=>({...p,[name]:it}))}>{it}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  <button className={"go"+(on?" stop":"")} onClick={()=>doToggle(name)}>
+                    {on?`■ ${last.item||"연습"} 종료하기`:`▶ ${sel} 연습 시작`}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab==="history"&&(
+        <div>
+          {allDates.length===0&&<div className="empty">아직 기록이 없어요</div>}
+
+          {allDates.length>0&&(
+            <div className="sum">
+              <div className="sum-head">
+                <span className="sum-title">{periodName} 합계</span>
+                <div className="seg">
+                  {[["week","주간"],["month","월간"]].map(([v,l])=>(
+                    <button key={v} className={range===v?"on":""} onClick={()=>{setRange(v);setOffset(0);}}>{l}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="nav">
+                <button onClick={()=>setOffset(o=>o-1)} aria-label="이전 기간">‹</button>
+                <span className="num">{rangeLabel}</span>
+                <button onClick={()=>setOffset(o=>Math.min(o+1,0))} disabled={offset>=0} aria-label="다음 기간">›</button>
+              </div>
+              <div className="sum-grid">
+                {members.map((m,idx)=>{
+                  const st=rangeStats(m.name,m.daily);
+                  return (
+                    <div className="sum-row" key={m.name} style={vars(COLORS[idx%COLORS.length])}>
+                      <div className="top">
+                        <div className="who-l">
+                          <div className="avatar sm">{m.name[0]}</div>
+                          <span style={{fontSize:14,fontWeight:600}}>{m.name}</span>
+                        </div>
+                        <span className="tot num" style={st.total?null:{color:"var(--fg-3)"}}>{minLabel(st.total)}</span>
+                      </div>
+                      {st.days>0?(
+                        <>
+                          <div className="meta">{st.days}일 연습 · 목표 달성 {st.met}일 · 하루 평균 {minLabel(Math.round(st.total/st.days))}</div>
+                          <div className="tags">{st.items.map(([it,v])=><span className="tag" key={it}>{it} {minLabel(v)}</span>)}</div>
+                        </>
+                      ):(
+                        <div className="meta">기록 없음</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="days">
+            {allDates.map(date=>(
+              <div className="day" key={date}>
+                <div className="day-head">
+                  <b className="num">{date}</b>
+                  {date===today&&<span className="pill">오늘</span>}
+                </div>
+                {Array.from(new Set([...members.map(m=>m.name),...Object.keys(records[date]||{})])).map((name,i)=>{
+                  const ss=(records[date]&&records[date][name]&&records[date][name].sessions)||[];
+                  if(!ss.length)return null;
+                  const total=totalMin(ss,now,date===today);
+                  const mi=members.findIndex(m=>m.name===name);
+                  const goal=mi>=0?members[mi].daily:((members[0]&&members[0].daily)??DEFAULTS.goal);
+                  const done=total>=goal;
+                  const idx=mi>=0?mi:i;
+                  return (
+                    <div key={name} style={{...vars(COLORS[idx%COLORS.length]),padding:"9px 0",borderTop:"1px solid var(--line-2)"}}>
+                      <div className="top" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:13.5,fontWeight:600}}>{name}</span>
+                        <span className={"num "+(done?"good":"miss")} style={{fontSize:13,fontWeight:600}}>
+                          {minLabel(total)} {done?"✓":`· ${minLabel(goal-total)} 부족`}
+                        </span>
+                      </div>
+                      <div className="tags" style={{marginLeft:0,marginTop:5}}>
+                        {byItem(ss,now,date===today).map(([it,v])=><span className="tag" key={it}>{it} {minLabel(v)}</span>)}
+                      </div>
+                      {ss.map((s,j)=>(
+                        <div key={j} className="num" style={{fontSize:11.5,color:"var(--fg-3)",marginTop:4,paddingLeft:9,borderLeft:"2px solid var(--c-line)"}}>
+                          {j+1}차 · {s.item||"기타"} {s.start} → {s.end||"진행 중"} {s.end?`(${minLabel(sessionMin(s,now))})`:""}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab==="settings"&&(
+        <div className="narrow">
+          <div className="panel">
+            <div className="lab">연습 항목</div>
+            {editItems.map((it,i)=>(
+              <div className="row" key={i} style={{marginBottom:8}}>
+                <input className="in" value={it} placeholder={`항목 ${i+1}`}
+                  onChange={e=>setEditItems(p=>p.map((x,k)=>k===i?e.target.value:x))}/>
+                {editItems.length>1&&<button className="x" onClick={()=>setEditItems(p=>p.filter((_,k)=>k!==i))}>✕</button>}
+              </div>
+            ))}
+            <button className="btn" onClick={()=>setEditItems(p=>[...p,""])}>+ 항목 추가</button>
+
+            <div className="lab" style={{marginTop:22}}>인턴별 목표</div>
+            {editMembers.map((m,i)=>(
+              <div className="mcard" key={i} style={vars(COLORS[i%COLORS.length])}>
+                <div className="row">
+                  <div className="avatar">{m.name[0]||(i+1)}</div>
+                  <input className="in" value={m.name} placeholder={`인턴 ${i+1}`}
+                    onChange={e=>setEditMembers(p=>p.map((x,k)=>k===i?{...x,name:e.target.value}:x))}/>
+                  {editMembers.length>1&&<button className="x" onClick={()=>setEditMembers(p=>p.filter((_,k)=>k!==i))}>✕</button>}
+                </div>
+                <div className="mrow">
+                  <span className="k">하루 목표</span>
+                  <input className="in n" type="number" min="1" step="5" value={m.daily}
+                    onChange={e=>setEditMembers(p=>p.map((x,k)=>k===i?{...x,daily:e.target.value}:x))}/>
+                  <span className="u">분</span>
+                </div>
+                <div className="mrow">
+                  <span className="k">총 누적 목표</span>
+                  <input className="in n" type="number" min="1" step="1" value={m.hours}
+                    onChange={e=>setEditMembers(p=>p.map((x,k)=>k===i?{...x,hours:e.target.value}:x))}/>
+                  <span className="u">시간</span>
+                </div>
+              </div>
+            ))}
+            <div className="row" style={{marginTop:14}}>
+              <button className="btn" onClick={()=>setEditMembers(p=>[...p,{name:"",daily:(p[p.length-1]&&p[p.length-1].daily)??DEFAULTS.goal,hours:(p[p.length-1]&&p[p.length-1].hours)??100}])}>+ 인턴 추가</button>
+              <button className="btn primary" onClick={applySettings}>저장하기</button>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="lab">백업 · 복원</div>
+            <div className="row" style={{flexWrap:"wrap"}}>
+              <button className="btn" onClick={makeBackup}>백업 내용 복사</button>
+              <button className="btn" onClick={()=>fileRef.current&&fileRef.current.click()}>파일에서 복원</button>
+              {backupText&&<button className="btn" onClick={()=>stage(backupText,"붙여넣은 내용")}>이 칸의 내용으로 복원</button>}
+            </div>
+            <input ref={fileRef} type="file" accept=".json,.txt,application/json,text/plain" onChange={onFile} style={{display:"none"}}/>
+            <textarea ref={taRef} className="ta" style={{marginTop:10}} value={backupText}
+              onChange={e=>setBackupText(e.target.value)}
+              placeholder="백업 내용 복사를 누르면 여기에 전체 기록이 나옵니다. 복원할 때는 저장해둔 내용을 여기에 붙여넣고 '이 칸의 내용으로 복원'을 누르세요."/>
+            <div className="hint">
+              기록은 이 컴퓨터의 이 브라우저에만 저장됩니다. 브라우저 데이터를 지우면 전원 기록이 사라지니, 주기적으로 백업해 메모장에 붙여넣고 .txt 파일로 저장해두세요.
+            </div>
+
+            {pending&&(
+              <div className="confirm">
+                <div><b>{pending.from}</b> — 인턴 {pending.members.length}명 · 기록 {pending.days}일치</div>
+                <div style={{color:"var(--warn)",marginTop:6}}>지금 이 기기의 기록은 모두 사라지고 위 내용으로 바뀝니다.</div>
+                <div className="row" style={{marginTop:11}}>
+                  <button className="btn" onClick={()=>setPending(null)}>취소</button>
+                  <button className="btn primary" onClick={applyPending}>덮어쓰기</button>
+                </div>
+              </div>
+            )}
+            {msg&&<div className={"msg"+(msg.bad?" bad":"")}>{msg.text}</div>}
+          </div>
+        </div>
+      )}
+      {msg&&tab!=="settings"&&<div className={"msg"+(msg.bad?" bad":"")}>{msg.text}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
